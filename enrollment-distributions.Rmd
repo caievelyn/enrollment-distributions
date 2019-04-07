@@ -1,0 +1,53 @@
+---
+title: "Harvard Enrollment Distributions by Department"
+author: "Evelyn Cai"
+date: "February 20th, 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+# Load all necessary libraries for reading the Excel file (readxl), cleaning the names to lower camelcase (janitor), attaching R chunks and knitting (knitr), the ever-useful tidyverse, the color gradient (viridis), and the denisty ridges plot (ggridges)
+library(knitr)
+library(readxl)
+library(janitor)
+library(tidyverse)
+library(viridis)
+library(ggridges)
+```
+
+```{r graphic, message = FALSE}
+
+# Read in excel file
+read_enrollment <- read_xlsx("ps_3_enrollment.xlsx", skip = 3) 
+
+#Clean names to become lower camel case and filter for classes with undergraduate enrollment of over five and with a majority of undergraduates
+enrollment <- read_enrollment %>% 
+  clean_names() %>%
+  filter(! is.na(course_section_code)) %>% 
+  filter(u_grad > 5,
+         u_grad/total > 0.5)
+
+# Create a density ridges plot for six specific departments on a log x scale
+enrollment %>%
+  # Filter for the specific departments
+  filter(course_department %in% c("Statistics", "Mathematics",
+                                  "Government", "Expository Writing",
+                                  "Economics", "Computer Science")) %>%
+  # Create a ggplot with aes values that will be carried over to the density ridges plot
+  ggplot(mapping = aes(x = u_grad, y = course_department)) +
+  # Add gradient fill to density ridges plot and get rid of legend
+  geom_density_ridges_gradient(mapping = aes(fill = ..x..), show.legend = FALSE) +
+  # Label the title, subtitle, and caption
+  labs(title = "Course Enrollments Spring 2019",
+       subtitle = "Departments vary in their typical class sizes",
+       caption = "Source: Harvard Registrar") +
+  # Select specific color gradient option
+  scale_fill_viridis(option = "C") +
+  # Make the x axis log base 10
+  scale_x_log10() +
+  # Label the x axis
+  xlab("Class Size") +
+  # Remove the y axis label
+  ylab(NULL)
+```
